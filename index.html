@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1f3a">
+  <meta name="description" content="Find any library book in seconds: scan the library QR code, search, and get the exact floor, rack and shelf.">
+  <title>Library Book Finder</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="loader" class="loader" aria-hidden="true"><div class="spinner"></div></div>
+
+  <header class="site-header no-print">
+    <div class="wrap bar">
+      <a class="brand" href="#home" data-nav="home"><img src="assets/images/favicon.svg" alt="" width="34" height="34"><span>Library <b>Book Finder</b></span></a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav id="mainNav" aria-label="Main navigation">
+        <a href="#home" data-nav="home">Home</a>
+        <a href="#find" data-nav="find">Find a Book</a>
+        <a href="#scan" data-nav="scan">Scan QR</a>
+        <a href="#layout" data-nav="layout">Library Layout</a>
+        <a href="#details" data-nav="details">Book Details</a>
+        <a href="#admin" data-nav="admin">Admin</a>
+        <a href="#about" data-nav="about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="view-home" class="view">
+      <div class="hero">
+        <div class="wrap hero-grid">
+          <div>
+            <h1>Find your book before your coffee gets cold.</h1>
+            <p class="lead">Search by title, author, subject or ISBN and get the floor, rack and shelf in one tap.</p>
+            <form id="heroForm" class="hero-search" role="search">
+              <input id="heroInput" type="search" placeholder="Try “algorithms”, “Feynman” or an ISBN" aria-label="Search books" autocomplete="off">
+              <button class="btn btn-teal" type="submit">Search</button>
+            </form>
+            <div class="hero-actions">
+              <button class="btn btn-ghost" data-nav="scan">Scan QR Code</button>
+              <button class="btn btn-ghost" data-nav="layout">Open Library Map</button>
+            </div>
+          </div>
+          <div class="hero-stats" id="stats"></div>
+        </div>
+      </div>
+      <div class="wrap stack">
+        <div><h2>Browse by subject</h2><div class="chips" id="homeCats"></div></div>
+        <div><h2>Popular books</h2><div class="grid" id="popularList"></div></div>
+        <div id="recentBox" hidden>
+          <div class="row-between"><h2>Recently viewed</h2><button class="link-btn" id="clearRecent">Clear</button></div>
+          <div class="grid" id="recentList"></div>
+        </div>
+        <div>
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li><b>Scan</b><span>Point your camera at the QR code in the library.</span></li>
+            <li><b>Search</b><span>Type a title, author, subject or ISBN.</span></li>
+            <li><b>Locate</b><span>Follow floor, section, rack and shelf to the book.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- FIND -->
+    <section id="view-find" class="view" hidden>
+      <div class="wrap stack">
+        <div><h1 class="page-title">Find a Book</h1><p class="muted">Results update as you type. Partial words work.</p></div>
+        <div class="search-panel">
+          <div class="searchbox">
+            <input id="searchInput" type="search" placeholder="Title, author, subject or ISBN" aria-label="Search books" autocomplete="off">
+            <button id="clearSearch" class="icon-btn" type="button" aria-label="Clear search" hidden>&times;</button>
+            <ul id="suggestions" class="suggestions" role="listbox" hidden></ul>
+          </div>
+          <select id="statusFilter" aria-label="Filter by availability">
+            <option value="All">Any availability</option><option>Available</option><option>Issued</option>
+          </select>
+        </div>
+        <div class="chips" id="catFilters" aria-label="Category filters"></div>
+        <div id="historyBox" hidden>
+          <div class="row-between"><span class="muted">Search history</span><button class="link-btn" id="clearHistory">Clear history</button></div>
+          <div class="chips small" id="historyList"></div>
+        </div>
+        <p id="resultInfo" class="muted" aria-live="polite"></p>
+        <div class="grid" id="results"></div>
+        <div id="emptyState" class="empty" hidden>
+          <div class="empty-icon">?</div>
+          <h3>No matching books</h3>
+          <p id="emptyText">Check the spelling, try fewer words, or search by ISBN.</p>
+          <button class="btn btn-teal" id="resetFilters">Show all books</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCAN -->
+    <section id="view-scan" class="view" hidden>
+      <div class="wrap stack narrow">
+        <div><h1 class="page-title">Scan QR Code</h1><p class="muted">Scan the library poster, or a QR code printed on a book shelf, to jump straight to the finder.</p></div>
+        <div class="card scanner">
+          <div class="viewfinder" id="viewfinder">
+            <video id="video" playsinline muted></video>
+            <div class="frame" aria-hidden="true"><i></i></div>
+            <div class="vf-msg" id="vfMsg">Camera is off</div>
+          </div>
+          <canvas id="scanCanvas" hidden></canvas>
+          <p id="scanStatus" class="muted" aria-live="polite">Press the button to start the camera.</p>
+          <div class="btn-row">
+            <button class="btn btn-teal" id="startScan">Scan QR Code</button>
+            <button class="btn btn-ghost-dark" id="stopScan" hidden>Stop camera</button>
+            <label class="btn btn-ghost-dark file-btn">Upload QR image<input type="file" id="qrFile" accept="image/*" hidden></label>
+          </div>
+        </div>
+        <details class="card" open>
+          <summary>Camera not working?</summary>
+          <ul class="plain">
+            <li>Tap <b>Allow</b> when your browser asks for camera access.</li>
+            <li>If you blocked it: tap the lock icon in the address bar, set Camera to Allow, then reload.</li>
+            <li>The camera only works on <b>https://</b> pages (GitHub Pages is https).</li>
+            <li>No camera? Use the manual search below or open your phone's own camera app.</li>
+          </ul>
+        </details>
+        <form id="manualForm" class="card">
+          <h3>Search manually instead</h3>
+          <div class="hero-search dark">
+            <input id="manualInput" type="search" placeholder="Book title, author, ISBN or pasted QR text" aria-label="Manual search">
+            <button class="btn btn-teal" type="submit">Find</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- LAYOUT -->
+    <section id="view-layout" class="view" hidden>
+      <div class="wrap stack">
+        <div><h1 class="page-title">Library Layout</h1><p class="muted">Pick a floor. Tap a rack to see its books. The selected book's rack is highlighted.</p></div>
+        <div class="chips" id="floorTabs" role="tablist"></div>
+        <div id="layoutMap" class="map"></div>
+        <div id="layoutGuide" class="card guide"></div>
+        <div id="rackBooks"></div>
+      </div>
+    </section>
+
+    <!-- DETAILS -->
+    <section id="view-details" class="view" hidden>
+      <div class="wrap stack"><div id="detailsContent"></div></div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="view-admin" class="view" hidden>
+      <div class="wrap stack">
+        <div><h1 class="page-title">Admin Dashboard</h1>
+          <div class="notice"><b>Frontend-only demo.</b> There is no secure login, and changes are saved only in this browser's localStorage. They are not shared with other devices. For a real library, connect this interface to a server.</div>
+        </div>
+
+        <div class="card" id="qrCard">
+          <h2>QR code generator</h2>
+          <p class="print-only">Scan to find your book — Library Book Finder</p>
+          <div class="qr-grid">
+            <div class="no-print">
+              <label>Link opens
+                <select id="qrTarget"><option value="site">The Book Finder home page</option></select>
+              </label>
+              <label>Website URL
+                <input id="qrUrl" type="url" placeholder="https://your-username.github.io/library-book-finder/">
+              </label>
+              <p class="muted small">Replace the URL with your deployed GitHub Pages address before printing.</p>
+              <div class="btn-row">
+                <button class="btn btn-teal" id="qrMake">Generate QR code</button>
+                <button class="btn btn-ghost-dark" id="qrDownload">Download PNG</button>
+                <button class="btn btn-ghost-dark" id="qrPrint">Print QR code</button>
+              </div>
+            </div>
+            <div class="qr-out"><div id="qrBox"></div><div id="qrLink" class="small muted"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 id="formTitle">Add a book</h2>
+          <form id="bookForm" class="form-grid" novalidate>
+            <input type="hidden" id="fId">
+            <label>Title<input id="fTitle" required maxlength="120"></label>
+            <label>Author<input id="fAuthor" required maxlength="80"></label>
+            <label>ISBN<input id="fIsbn" required placeholder="978-0-262-03384-8"></label>
+            <label>Category<select id="fCategory"></select></label>
+            <label>Section<select id="fSection"></select></label>
+            <label>Floor<input id="fFloor" readonly></label>
+            <label>Rack<select id="fRack"></select></label>
+            <label>Shelf<select id="fShelf"></select></label>
+            <label>Availability<select id="fStatus"><option>Available</option><option>Issued</option></select></label>
+            <div class="btn-row full">
+              <button class="btn btn-teal" type="submit" id="fSubmit">Add book</button>
+              <button class="btn btn-ghost-dark" type="button" id="fCancel" hidden>Cancel edit</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="row-between wrap-row">
+            <h2>Manage books <span class="muted small" id="adminCount"></span></h2>
+            <input id="adminSearch" type="search" placeholder="Search records" aria-label="Search records" class="inline-search">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Book</th><th>ISBN</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="adminRows"></tbody>
+            </table>
+          </div>
+          <div class="btn-row top-gap">
+            <button class="btn btn-ghost-dark" id="exportBtn">Export JSON</button>
+            <label class="btn btn-ghost-dark file-btn">Import JSON<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+            <button class="btn btn-danger" id="resetBtn">Reset to sample data</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="view-about" class="view" hidden>
+      <div class="wrap stack narrow">
+        <h1 class="page-title">About the Project</h1>
+        <div class="card prose">
+          <p>Library Book Finder helps students locate books without wandering the stacks. A QR code displayed in the library opens this site; a search then returns the floor, section, rack and shelf.</p>
+          <h3>Built with</h3>
+          <ul class="plain">
+            <li>HTML5, CSS3 and vanilla JavaScript. No framework and no backend.</li>
+            <li><a href="https://github.com/cozmo/jsQR" target="_blank" rel="noopener">jsQR</a> (via jsDelivr CDN) reads QR codes from the camera.</li>
+            <li><a href="https://github.com/davidshimjs/qrcodejs" target="_blank" rel="noopener">qrcodejs</a> (via cdnjs CDN) generates QR codes.</li>
+            <li>Book records live in <code>js/books.js</code>; admin edits are saved in localStorage.</li>
+          </ul>
+          <h3>Limits of this demo</h3>
+          <p>There is no secure authentication and no shared database. Admin changes stay in one browser. To publish changes for everyone, edit <code>js/books.js</code> (or import an exported JSON file into the default list) and push to GitHub.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer no-print"><div class="wrap">Library Book Finder · Frontend-only demo · Works on GitHub Pages</div></footer>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- CDN libraries (documented in README) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/books.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/scanner.js"></script>
+  <script src="js/admin.js"></script>
+  <script>LBF.init();</script>
+</body>
+</html>
